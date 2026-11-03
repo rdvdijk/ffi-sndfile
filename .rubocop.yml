@@ -1,0 +1,77 @@
+plugins:
+  - rubocop-rspec
+  - rubocop-rake
+  - rubocop-performance
+
+AllCops:
+  TargetRubyVersion: 3.2
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - "coverage/**/*"
+    - "pkg/**/*"
+    - "vendor/**/*"
+
+Layout/LineLength:
+  Max: 120
+
+# The FFI binding modules are long lists of attach_function / enum / struct
+# declarations; splitting them up would not make them clearer.
+Metrics/AbcSize:
+  Exclude: ["lib/sndfile/native/functions.rb", "spec/lib/ogg_vorbis_reader.rb"]
+Metrics/BlockLength:
+  Exclude: ["spec/**/*.rb", "*.gemspec"]
+# OggVorbisReader is a byte-level parser that follows the Ogg and Vorbis
+# specifications step by step.
+Metrics/MethodLength:
+  Max: 15
+  Exclude: ["spec/lib/ogg_vorbis_reader.rb"]
+# constants.rb is the list of every constant in sndfile.h.
+Metrics/ModuleLength:
+  Exclude: ["spec/**/*.rb", "lib/sndfile/constants.rb"]
+# SoundFile is a thin facade over libsndfile's calls.
+Metrics/ClassLength:
+  Max: 200
+Metrics/ParameterLists:
+  CountKeywordArgs: false
+
+Style/Documentation:
+  Exclude: ["spec/**/*.rb"]
+
+# Specs check several facts about one file or call; these cops would require
+# a rewrite of most examples for little benefit.
+RSpec/MultipleExpectations:
+  Enabled: false
+RSpec/MessageSpies:
+  Enabled: false
+RSpec/StubbedMock:
+  Enabled: false
+RSpec/ExampleLength:
+  Max: 20
+RSpec/MultipleMemoizedHelpers:
+  Max: 8
+RSpec/NestedGroups:
+  Max: 4
+# Context names like "on a 64-bit platform" read fine here.
+RSpec/ContextWording:
+  Enabled: false
+# Integration specs describe behaviour of files, not a class.
+RSpec/DescribeClass:
+  Exclude: ["spec/integration/**/*.rb"]
+RSpec/SpecFilePathFormat:
+  Exclude: ["spec/integration/**/*.rb"]
+  CustomTransform:
+    SndFile: sndfile
+
+# Symbols such as :pcm_16 and :mpeg_layer_iii follow libsndfile's constant names.
+Naming/VariableNumber:
+  CheckSymbols: false
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+
+# The entry point is named after the gem (ffi-sndfile), as Bundler.require expects.
+Naming/FileName:
+  Exclude: ["lib/ffi-sndfile.rb"]

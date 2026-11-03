@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    # Ubuntu 24.04 ships libsndfile 1.2.2. vorbis-tools provides
+    # vorbiscomment, which the Ogg/Vorbis integration spec uses to check
+    # the comments it writes.
+    runs-on: ubuntu-24.04
+    continue-on-error: ${{ matrix.experimental }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby-version: [ '3.2', '3.3', '3.4', '4.0' ]
+        experimental: [ false ]
+        include:
+          - ruby-version: 'ruby-head'
+            experimental: true
+          - ruby-version: 'jruby'
+            experimental: true
+          - ruby-version: 'truffleruby'
+            experimental: true
+
+    env:
+      COVERAGE: 1
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -qq libsndfile1-dev vorbis-tools
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
+
+      - name: Run tests
+        run: bundle exec rspec
+
+      # Linting doesn't depend on the Ruby version, and RuboCop itself
+      # crashes in some cops on TruffleRuby.
+      - name: Run RuboCop
+        if: matrix.ruby-version == '3.4'
+        run: bundle exec rubocop
+
+      - name: Upload coverage to Coveralls
+        if: matrix.ruby-version == '3.4'
+        uses: coverallsapp/github-action@v2
+        with:
+          file: coverage/lcov.info
+
+  newer-libsndfile:
+    # The same specs against the libsndfile that Ubuntu 26.04 ships.
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -qq libsndfile1-dev vorbis-tools
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+
+      - name: Run tests
+        run: bundle exec rspec
